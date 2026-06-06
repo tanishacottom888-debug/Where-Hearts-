@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Admin Panel | Where Hearts Meet</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #0F1A24; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px 16px 50px; }
@@ -24,11 +23,13 @@
         input, select, textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #E8E0D5; border-radius: 40px; font-size: 14px; background: white; font-family: inherit; }
         textarea { border-radius: 20px; resize: vertical; }
         .photo-upload-area { border: 2px dashed #C6A43F; background: #FFF8F0; border-radius: 24px; padding: 16px; text-align: center; cursor: pointer; margin-top: 8px; }
+        .photo-upload-area:hover { background: #FFF0E8; }
         .photos-preview { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
         .photo-preview-item { position: relative; width: 80px; height: 80px; border-radius: 16px; overflow: hidden; border: 2px solid #C6A43F; }
         .photo-preview-item img { width: 100%; height: 100%; object-fit: cover; }
         .remove-photo { position: absolute; top: -8px; right: -8px; background: #6B2D3E; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
-        .add-btn { background: #6B2D3E; color: white; border: none; padding: 12px 28px; border-radius: 40px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .add-btn { background: #6B2D3E; color: white; border: none; padding: 12px 28px; border-radius: 40px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+        .add-btn:hover { background: #4F1E2C; }
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 20px; min-width: 800px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E8E0D5; }
@@ -37,6 +38,7 @@
         .edit-btn, .delete-btn { padding: 6px 12px; border: none; border-radius: 20px; cursor: pointer; margin-right: 6px; font-size: 12px; }
         .edit-btn { background: #C6A43F; color: #0F1A24; }
         .delete-btn { background: #6B2D3E; color: white; }
+        .success-msg { background: #4CAF50; color: white; padding: 10px; border-radius: 10px; margin-top: 10px; display: none; }
         @media (max-width: 700px) { th, td { font-size: 12px; padding: 8px; } }
     </style>
 </head>
@@ -65,29 +67,53 @@
                 <input type="text" id="memberCity" placeholder="City">
                 <input type="text" id="memberCountry" placeholder="Country *">
                 <input type="text" id="memberNationality" placeholder="Nationality">
-                <select id="memberGender"><option value="Male">Male</option><option value="Female">Female</option></select>
-                <select id="memberInterestedIn"><option value="Women">Interested in Women</option><option value="Men">Interested in Men</option><option value="Everyone">Everyone</option></select>
+                <select id="memberGender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+                <select id="memberInterestedIn">
+                    <option value="Women">Interested in Women</option>
+                    <option value="Men">Interested in Men</option>
+                    <option value="Everyone">Everyone</option>
+                </select>
             </div>
-            <div><textarea id="memberBio" rows="2" placeholder="Bio"></textarea></div>
-            <div><textarea id="memberLookingFor" rows="2" placeholder="What they are looking for"></textarea></div>
-            <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()">📸 Tap to upload photos (max 6)</div>
+            <div style="margin-top: 12px;"><textarea id="memberBio" rows="2" placeholder="Bio / About them"></textarea></div>
+            <div style="margin-top: 12px;"><textarea id="memberLookingFor" rows="2" placeholder="What they are looking for"></textarea></div>
+            
+            <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()">
+                📸 Tap to upload photos (max 6)
+            </div>
             <input type="file" id="photoInput" accept="image/*" multiple style="display:none">
             <div class="photos-preview" id="photosPreview"></div>
-            <button class="add-btn" onclick="addMember()">➕ Add Member</button>
+            
+            <button class="add-btn" onclick="addMember()">➕ Add Member to Gallery</button>
+            <div id="successMsg" class="success-msg">✅ Member added successfully! It will now appear on members page.</div>
         </div>
         <div class="admin-card"><h2>📋 All Members</h2><div id="membersTable"></div></div>
     </div>
 </div>
 
 <script>
+    // Supabase configuration - YOUR CREDENTIALS
+    const SUPABASE_URL = "https://cggskooljrjacgjnxotc.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Ge37Z1zdP79Vb19GobMCCg_9PVkXSlT";
+    
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
     let selectedPhotos = [];
     let members = [];
 
+    // Handle photo selection (max 6)
     document.getElementById('photoInput').addEventListener('change', function(e) {
         const files = Array.from(e.target.files);
         const remainingSlots = 6 - selectedPhotos.length;
         const filesToAdd = files.slice(0, remainingSlots);
+        
         filesToAdd.forEach(file => {
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Photo ' + file.name + ' is larger than 2MB');
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(event) {
                 selectedPhotos.push({ dataUrl: event.target.result });
@@ -95,83 +121,285 @@
             };
             reader.readAsDataURL(file);
         });
-        if (files.length > remainingSlots) alert(`Only ${remainingSlots} more photos allowed`);
+        
+        if (files.length > remainingSlots) {
+            alert(`You can only upload up to 6 photos. Only ${remainingSlots} more added.`);
+        }
         e.target.value = '';
     });
 
     function renderPhotoPreview() {
         const container = document.getElementById('photosPreview');
-        if (selectedPhotos.length === 0) { container.innerHTML = ''; return; }
+        if (selectedPhotos.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
         let html = '';
         selectedPhotos.forEach((photo, index) => {
-            html += `<div class="photo-preview-item"><img src="${photo.dataUrl}"><div class="remove-photo" onclick="removePhoto(${index})">✕</div></div>`;
+            html += `<div class="photo-preview-item">
+                        <img src="${photo.dataUrl}">
+                        <div class="remove-photo" onclick="removePhoto(${index})">✕</div>
+                    </div>`;
         });
         container.innerHTML = html;
     }
 
-    function removePhoto(index) { selectedPhotos.splice(index, 1); renderPhotoPreview(); }
+    function removePhoto(index) {
+        selectedPhotos.splice(index, 1);
+        renderPhotoPreview();
+    }
 
+    // ADD MEMBER - Fixed to work properly
     async function addMember() {
+        const name = document.getElementById('memberName').value;
+        const age = document.getElementById('memberAge').value;
+        const city = document.getElementById('memberCity').value;
+        const country = document.getElementById('memberCountry').value;
+        const nationality = document.getElementById('memberNationality').value;
+        const gender = document.getElementById('memberGender').value;
+        const interestedIn = document.getElementById('memberInterestedIn').value;
+        const bio = document.getElementById('memberBio').value;
+        const lookingFor = document.getElementById('memberLookingFor').value;
+        
+        // Validation
+        if (!name || !age || !country) {
+            alert("Please fill required fields: Name, Age, Country");
+            return;
+        }
+        
+        if (selectedPhotos.length === 0) {
+            alert("Please upload at least 1 photo (max 6)");
+            return;
+        }
+        
         const memberData = {
-            name: document.getElementById('memberName').value,
-            age: parseInt(document.getElementById('memberAge').value),
-            city: document.getElementById('memberCity').value,
-            country: document.getElementById('memberCountry').value,
-            nationality: document.getElementById('memberNationality').value,
-            gender: document.getElementById('memberGender').value,
-            interested_in: document.getElementById('memberInterestedIn').value,
-            bio: document.getElementById('memberBio').value,
-            looking_for: document.getElementById('memberLookingFor').value,
-            photos: selectedPhotos.map(p => p.dataUrl)
+            name: name,
+            age: parseInt(age),
+            city: city,
+            country: country,
+            nationality: nationality,
+            gender: gender,
+            interested_in: interestedIn,
+            bio: bio,
+            looking_for: lookingFor,
+            photos: selectedPhotos.map(p => p.dataUrl),
+            created_at: new Date().toISOString()
         };
-        if (!memberData.name || !memberData.age || !memberData.country) { alert("Fill required fields"); return; }
-        if (memberData.photos.length === 0) { alert("Upload at least 1 photo"); return; }
-        await addMember(memberData);
-        alert("Member added!");
-        location.reload();
+        
+        try {
+            // Save to Supabase
+            const { data, error } = await supabase
+                .from('members')
+                .insert([memberData])
+                .select();
+            
+            if (error) throw error;
+            
+            // Show success message
+            const successMsg = document.getElementById('successMsg');
+            successMsg.style.display = 'block';
+            setTimeout(() => { successMsg.style.display = 'none'; }, 3000);
+            
+            // Clear form
+            document.getElementById('memberName').value = '';
+            document.getElementById('memberAge').value = '';
+            document.getElementById('memberCity').value = '';
+            document.getElementById('memberCountry').value = '';
+            document.getElementById('memberNationality').value = '';
+            document.getElementById('memberBio').value = '';
+            document.getElementById('memberLookingFor').value = '';
+            selectedPhotos = [];
+            renderPhotoPreview();
+            
+            // Refresh members table
+            await loadMembersTable();
+            
+            alert(`✅ Member "${name}" added successfully! It will now appear on the members page.`);
+            
+        } catch (error) {
+            console.error("Error adding member:", error);
+            alert("Error adding member: " + error.message);
+        }
     }
 
+    // Load registrations from Supabase
     async function loadRegistrations() {
-        const registrations = await getRegistrations();
+        const { data, error } = await supabase
+            .from('registrations')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error("Error loading registrations:", error);
+            return;
+        }
+        
         const container = document.getElementById('registrationsTable');
-        if (registrations.length === 0) { container.innerHTML = "<p>No registrations yet.</p>"; return; }
-        let html = `<table><thead><tr><th>Photos</th><th>Name</th><th>Gender</th><th>Age</th><th>Nationality</th><th>Country</th><th>Looking For</th><th>WhatsApp</th><th>Registered</th></tr></thead><tbody>`;
-        registrations.forEach(r => {
-            let photosHtml = r.photos && r.photos.length ? `<div style="display:flex;gap:3px;">${r.photos.slice(0,2).map(p => `<img src="${p}" width="35" height="35" style="border-radius:8px;">`).join('')}</div>` : '📷';
-            html += `<tr><td>${photosHtml}</td><td>${r.full_name}</td><td>${r.gender}</td><td>${r.age}</td><td>${r.nationality}</td><td>${r.current_country}</td><td>${(r.looking_for || '').substring(0, 40)}</td><td>${r.whatsapp}</td><td>${new Date(r.created_at).toLocaleDateString()}</td></tr>`;
+        if (!data || data.length === 0) {
+            container.innerHTML = "<p style='padding:20px;text-align:center;'>No registrations yet.</p>";
+            return;
+        }
+        
+        let html = `<table>
+            <thead>
+                <tr><th>Photos</th><th>Name</th><th>Gender</th><th>Age</th><th>Nationality</th><th>Country</th><th>Looking For</th><th>WhatsApp</th><th>Registered</th></tr>
+            </thead>
+            <tbody>`;
+        
+        data.forEach(r => {
+            let photosHtml = '';
+            if (r.photos && r.photos.length) {
+                photosHtml = `<div style="display:flex;gap:3px;">${r.photos.slice(0,2).map(p => `<img src="${p}" width="35" height="35" style="border-radius:8px;object-fit:cover;">`).join('')}</div>`;
+            } else {
+                photosHtml = '📷';
+            }
+            
+            html += `<tr>
+                        <td>${photosHtml}</td>
+                        <td>${r.full_name || 'N/A'}</td>
+                        <td>${r.gender || 'N/A'}</td>
+                        <td>${r.age || 'N/A'}</td>
+                        <td>${r.nationality || 'N/A'}</td>
+                        <td>${r.current_country || 'N/A'}</td>
+                        <td>${(r.looking_for || '').substring(0, 40)}</td>
+                        <td>${r.whatsapp || 'N/A'}</td>
+                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                    </tr>`;
         });
-        html += `</tbody></table>`;
+        html += `</tbody>${"<"}/table>`;
         container.innerHTML = html;
     }
 
+    // Load members table (for admin view)
     async function loadMembersTable() {
-        members = await getMembers();
+        const { data, error } = await supabase
+            .from('members')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error("Error loading members:", error);
+            return;
+        }
+        
+        members = data || [];
         const container = document.getElementById('membersTable');
-        if (members.length === 0) { container.innerHTML = "<p>No members.</p>"; return; }
-        let html = `<table><thead><tr><th>Photos</th><th>Name</th><th>Age</th><th>Country</th><th>Gender</th><th>Bio</th><th>Actions</th></tr></thead><tbody>`;
-        members.forEach(m => {
-            let photosHtml = m.photos && m.photos.length ? `<img src="${m.photos[0]}" width="40" height="40" style="border-radius:50%;">` : '📷';
-            html += `<tr><td>${photosHtml}</td><td>${m.name}</td><td>${m.age}</td><td>${m.country}</td><td>${m.gender}</td><td>${(m.bio || '').substring(0, 30)}</td>
-            <td><button class="edit-btn" onclick="editMember(${m.id})">✏️</button><button class="delete-btn" onclick="deleteMember(${m.id})">🗑️</button></td></tr>`;
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = "<p style='padding:20px;text-align:center;'>No members yet. Add one above.</p>";
+            return;
+        }
+        
+        let html = `<table>
+            <thead>
+                <tr><th>Photo</th><th>Name</th><th>Age</th><th>Country</th><th>Gender</th><th>Bio</th><th>Actions</th></tr>
+            </thead>
+            <tbody>`;
+        
+        data.forEach(m => {
+            let photosHtml = '';
+            if (m.photos && m.photos.length) {
+                photosHtml = `<img src="${m.photos[0]}" width="45" height="45" style="border-radius:50%;object-fit:cover;">`;
+            } else {
+                photosHtml = '📷';
+            }
+            
+            html += `<tr>
+                        <td>${photosHtml}</td>
+                        <td>${m.name}</td>
+                        <td>${m.age}</td>
+                        <td>${m.country}</td>
+                        <td>${m.gender}</td>
+                        <td>${(m.bio || '').substring(0, 40)}</td>
+                        <td>
+                            <button class="edit-btn" onclick="editMember(${m.id})">✏️ Edit</button>
+                            <button class="delete-btn" onclick="deleteMember(${m.id})">🗑️ Del</button>
+                        </td>
+                    </tr>`;
         });
-        html += `</tbody></table>`;
+        html += `</tbody>${"<"}/table>`;
         container.innerHTML = html;
     }
 
-    async function deleteMember(id) { if(confirm("Delete?")) { await deleteMember(id); loadMembersTable(); } }
-    async function editMember(id) { const member = members.find(m => m.id === id); if(!member) return; const newName = prompt("New name", member.name); if(newName) { member.name = newName; await updateMember(id, member); loadMembersTable(); } }
-
-    async function logout() { await adminLogout(); window.location.href = 'admin-login.html'; }
-
-    function switchTab(tab) {
-        document.getElementById('registrationsTab').classList.toggle('active', tab === 'registrations');
-        document.getElementById('membersTab').classList.toggle('active', tab === 'members');
-        document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', (tab === 'registrations' && i === 0) || (tab === 'members' && i === 1)));
-        if(tab === 'registrations') loadRegistrations(); else loadMembersTable();
+    // Delete member
+    async function deleteMember(id) {
+        if (!confirm("⚠️ Delete this member permanently?")) return;
+        
+        const { error } = await supabase
+            .from('members')
+            .delete()
+            .eq('id', id);
+        
+        if (error) {
+            alert("Error deleting: " + error.message);
+        } else {
+            alert("✅ Member deleted!");
+            await loadMembersTable();
+        }
     }
 
-    // Check authentication
-    requireAdmin().then(() => { loadRegistrations(); });
+    // Edit member
+    async function editMember(id) {
+        const member = members.find(m => m.id === id);
+        if (!member) return;
+        
+        const newName = prompt("Edit full name", member.name);
+        if (newName && newName !== member.name) {
+            const { error } = await supabase
+                .from('members')
+                .update({ name: newName })
+                .eq('id', id);
+            if (error) alert("Error: " + error.message);
+            else await loadMembersTable();
+        }
+    }
+
+    // Logout
+    async function logout() {
+        await supabase.auth.signOut();
+        window.location.href = 'admin-login.html';
+    }
+
+    // Check if admin is logged in
+    async function checkAuth() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'admin-login.html';
+            return false;
+        }
+        return true;
+    }
+
+    // Switch tabs
+    function switchTab(tab) {
+        const registrationsTab = document.getElementById('registrationsTab');
+        const membersTab = document.getElementById('membersTab');
+        const buttons = document.querySelectorAll('.tab-btn');
+        
+        if (tab === 'registrations') {
+            registrationsTab.classList.add('active');
+            membersTab.classList.remove('active');
+            buttons[0].classList.add('active');
+            buttons[1].classList.remove('active');
+            loadRegistrations();
+        } else {
+            registrationsTab.classList.remove('active');
+            membersTab.classList.add('active');
+            buttons[0].classList.remove('active');
+            buttons[1].classList.add('active');
+            loadMembersTable();
+        }
+    }
+
+    // Initialize
+    async function init() {
+        const isAuthed = await checkAuth();
+        if (isAuthed) {
+            loadRegistrations();
+        }
+    }
+    
+    init();
 </script>
 </body>
 </html>
