@@ -197,26 +197,79 @@
             box-shadow: 0 0 0 3px rgba(198, 164, 63, 0.15);
         }
 
-        .photo-upload {
+        /* Photo upload styling - improved for 3 photos */
+        .photo-upload-area {
             border: 2px dashed #C6A43F;
             background: #FFF8F0;
-            border-radius: 60px;
-            padding: 10px 16px;
-            cursor: pointer;
-        }
-
-        .photo-preview {
-            margin-top: 10px;
-            display: none;
+            border-radius: 24px;
+            padding: 16px;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .photo-preview img {
+        .photo-upload-area:hover {
+            background: #FFF0E8;
+            border-color: #6B2D3E;
+        }
+
+        .photo-upload-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .photo-upload-text {
+            font-size: 13px;
+            color: #6B5E5E;
+        }
+
+        .photo-upload-subtext {
+            font-size: 10px;
+            color: #C6A43F;
+            margin-top: 4px;
+        }
+
+        .photos-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .photo-preview-item {
+            position: relative;
             width: 80px;
             height: 80px;
-            border-radius: 50%;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid #C6A43F;
+        }
+
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            border: 3px solid #C6A43F;
+        }
+
+        .remove-photo {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #6B2D3E;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #photoInput {
+            display: none;
         }
 
         .double-row {
@@ -287,6 +340,10 @@
                 padding: 14px 20px;
                 font-size: 16px;
             }
+            .photo-preview-item {
+                width: 65px;
+                height: 65px;
+            }
         }
 
         @media (max-width: 380px) {
@@ -332,7 +389,7 @@
                 <p>Confidential · Curated · Heart-led</p>
             </div>
 
-            <form id="userForm" enctype="multipart/form-data">
+            <form id="userForm">
                 <div class="form-group">
                     <label>Full name</label>
                     <input type="text" id="fullName" placeholder="Your real name" required>
@@ -380,12 +437,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Upload your photo</label>
-                    <input type="file" id="userPhoto" accept="image/*" class="photo-upload">
-                    <div class="photo-preview" id="photoPreview">
-                        <img id="previewImg" src="">
+                    <label>Upload your photos (max 3)</label>
+                    <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()">
+                        <div class="photo-upload-icon">📸</div>
+                        <div class="photo-upload-text">Tap to upload photos</div>
+                        <div class="photo-upload-subtext">You can upload up to 3 photos</div>
                     </div>
-                    <span class="hint">📸 Upload a clear photo of yourself (max 2MB)</span>
+                    <input type="file" id="photoInput" accept="image/*" multiple style="display:none">
+                    <div class="photos-preview" id="photosPreview"></div>
+                    <span class="hint">📸 Upload clear photos of yourself (max 3 photos, each up to 2MB)</span>
                 </div>
 
                 <div class="form-group">
@@ -405,63 +465,102 @@
 </div>
 
 <script>
-    // Photo preview
-    document.getElementById('userPhoto').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
+    let selectedPhotos = [];
+
+    // Handle photo selection (max 3)
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        const remainingSlots = 3 - selectedPhotos.length;
+        const filesToAdd = files.slice(0, remainingSlots);
+        
+        filesToAdd.forEach(file => {
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Photo ' + file.name + ' is larger than 2MB. Please choose a smaller photo.');
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(event) {
-                const preview = document.getElementById('photoPreview');
-                const img = document.getElementById('previewImg');
-                img.src = event.target.result;
-                preview.style.display = 'block';
+                selectedPhotos.push({
+                    file: file,
+                    dataUrl: event.target.result
+                });
+                renderPhotoPreview();
             };
             reader.readAsDataURL(file);
+        });
+        
+        if (files.length > remainingSlots) {
+            alert(`You can only upload up to 3 photos. Only ${remainingSlots} more photo(s) added.`);
         }
+        
+        e.target.value = '';
     });
+
+    function renderPhotoPreview() {
+        const container = document.getElementById('photosPreview');
+        if (selectedPhotos.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '';
+        selectedPhotos.forEach((photo, index) => {
+            html += `
+                <div class="photo-preview-item">
+                    <img src="${photo.dataUrl}" alt="Photo ${index + 1}">
+                    <div class="remove-photo" onclick="removePhoto(${index})">✕</div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function removePhoto(index) {
+        selectedPhotos.splice(index, 1);
+        renderPhotoPreview();
+    }
 
     document.getElementById('userForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        const photoFile = document.getElementById('userPhoto').files[0];
-        
-        const saveAndRedirect = function(userData) {
-            // Save to user registrations
-            let registrations = JSON.parse(localStorage.getItem('whm_registrations') || '[]');
-            registrations.push(userData);
-            localStorage.setItem('whm_registrations', JSON.stringify(registrations));
+        const fullName = document.getElementById('fullName').value;
+        const gender = document.getElementById('gender').value;
+        const interestedIn = document.getElementById('interestedIn').value;
+        const age = document.getElementById('age').value;
+        const nationality = document.getElementById('nationality').value;
+        const currentCountry = document.getElementById('currentCountry').value;
+        const lookingFor = document.getElementById('lookingFor').value;
+        const whatsapp = document.getElementById('whatsapp').value;
 
-            alert('💖 Thank you, ' + userData.fullName + '! Your registration has been saved.');
-            
-            // ✅ REDIRECT to members page
-            window.location.href = 'members.html';
-        };
-        
+        if (!fullName || !gender || !interestedIn || !age || !nationality || !currentCountry || !whatsapp) {
+            alert('Please fill all required fields.');
+            return;
+        }
+
         const userData = {
             id: Date.now(),
-            fullName: document.getElementById('fullName').value,
-            gender: document.getElementById('gender').value,
-            interestedIn: document.getElementById('interestedIn').value,
-            age: document.getElementById('age').value,
-            nationality: document.getElementById('nationality').value,
-            currentCountry: document.getElementById('currentCountry').value,
-            lookingFor: document.getElementById('lookingFor').value,
-            whatsapp: document.getElementById('whatsapp').value,
-            photo: '',
+            fullName: fullName,
+            gender: gender,
+            interestedIn: interestedIn,
+            age: age,
+            nationality: nationality,
+            currentCountry: currentCountry,
+            lookingFor: lookingFor,
+            whatsapp: whatsapp,
+            photos: selectedPhotos.map(p => p.dataUrl),
             timestamp: new Date().toISOString(),
             type: 'user_registration'
         };
 
-        if (photoFile) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                userData.photo = event.target.result;
-                saveAndRedirect(userData);
-            };
-            reader.readAsDataURL(photoFile);
-        } else {
-            saveAndRedirect(userData);
-        }
+        // Save to user registrations
+        let registrations = JSON.parse(localStorage.getItem('whm_registrations') || '[]');
+        registrations.push(userData);
+        localStorage.setItem('whm_registrations', JSON.stringify(registrations));
+
+        alert('💖 Thank you, ' + fullName + '! Your registration has been saved.');
+        
+        // ✅ REDIRECT to members page
+        window.location.href = 'members.html';
     });
 </script>
 </body>
