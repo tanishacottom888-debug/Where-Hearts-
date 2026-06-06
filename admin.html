@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Admin Panel | Where Hearts Meet</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0F1A24; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px 16px 50px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #C6A43F; font-size: 28px; margin-bottom: 8px; }
+        .sub { color: #F9F6F0; margin-bottom: 32px; font-size: 14px; }
+        .logout-btn { background: #6B2D3E; color: white; border: none; padding: 8px 20px; border-radius: 40px; cursor: pointer; margin-bottom: 20px; }
+        .tab-buttons { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .tab-btn { background: #1A2E3A; color: #F9F6F0; border: none; padding: 12px 24px; border-radius: 40px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        .tab-btn.active { background: #6B2D3E; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .admin-card { background: #F9F6F0; border-radius: 28px; padding: 24px; margin-bottom: 32px; }
+        .admin-card h2 { color: #0F1A24; margin-bottom: 20px; font-size: 22px; border-left: 4px solid #C6A43F; padding-left: 12px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        input, select, textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #E8E0D5; border-radius: 40px; font-size: 14px; background: white; font-family: inherit; }
+        textarea { border-radius: 20px; resize: vertical; }
+        .photo-upload-area { border: 2px dashed #C6A43F; background: #FFF8F0; border-radius: 24px; padding: 16px; text-align: center; cursor: pointer; margin-top: 8px; }
+        .photos-preview { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+        .photo-preview-item { position: relative; width: 80px; height: 80px; border-radius: 16px; overflow: hidden; border: 2px solid #C6A43F; }
+        .photo-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+        .remove-photo { position: absolute; top: -8px; right: -8px; background: #6B2D3E; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+        .add-btn { background: #6B2D3E; color: white; border: none; padding: 12px 28px; border-radius: 40px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 20px; min-width: 800px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E8E0D5; }
+        th { background: #0F1A24; color: #C6A43F; }
+        .user-photo { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+        .edit-btn, .delete-btn { padding: 6px 12px; border: none; border-radius: 20px; cursor: pointer; margin-right: 6px; font-size: 12px; }
+        .edit-btn { background: #C6A43F; color: #0F1A24; }
+        .delete-btn { background: #6B2D3E; color: white; }
+        @media (max-width: 700px) { th, td { font-size: 12px; padding: 8px; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div><h1>🛡️ Where Hearts Meet — Admin</h1><div class="sub">Manage members & registrations</div></div>
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </div>
+
+    <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchTab('registrations')">📋 Registrations</button>
+        <button class="tab-btn" onclick="switchTab('members')">💑 Members</button>
+    </div>
+
+    <div id="registrationsTab" class="tab-content active">
+        <div class="admin-card"><h2>📝 User Registrations</h2><div id="registrationsTable"></div></div>
+    </div>
+
+    <div id="membersTab" class="tab-content">
+        <div class="admin-card">
+            <h2>➕ Add New Member</h2>
+            <div class="form-grid">
+                <input type="text" id="memberName" placeholder="Full name *">
+                <input type="number" id="memberAge" placeholder="Age *">
+                <input type="text" id="memberCity" placeholder="City">
+                <input type="text" id="memberCountry" placeholder="Country *">
+                <input type="text" id="memberNationality" placeholder="Nationality">
+                <select id="memberGender"><option value="Male">Male</option><option value="Female">Female</option></select>
+                <select id="memberInterestedIn"><option value="Women">Interested in Women</option><option value="Men">Interested in Men</option><option value="Everyone">Everyone</option></select>
+            </div>
+            <div><textarea id="memberBio" rows="2" placeholder="Bio"></textarea></div>
+            <div><textarea id="memberLookingFor" rows="2" placeholder="What they are looking for"></textarea></div>
+            <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()">📸 Tap to upload photos (max 6)</div>
+            <input type="file" id="photoInput" accept="image/*" multiple style="display:none">
+            <div class="photos-preview" id="photosPreview"></div>
+            <button class="add-btn" onclick="addMember()">➕ Add Member</button>
+        </div>
+        <div class="admin-card"><h2>📋 All Members</h2><div id="membersTable"></div></div>
+    </div>
+</div>
+
+<script>
+    let selectedPhotos = [];
+    let members = [];
+
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        const remainingSlots = 6 - selectedPhotos.length;
+        const filesToAdd = files.slice(0, remainingSlots);
+        filesToAdd.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                selectedPhotos.push({ dataUrl: event.target.result });
+                renderPhotoPreview();
+            };
+            reader.readAsDataURL(file);
+        });
+        if (files.length > remainingSlots) alert(`Only ${remainingSlots} more photos allowed`);
+        e.target.value = '';
+    });
+
+    function renderPhotoPreview() {
+        const container = document.getElementById('photosPreview');
+        if (selectedPhotos.length === 0) { container.innerHTML = ''; return; }
+        let html = '';
+        selectedPhotos.forEach((photo, index) => {
+            html += `<div class="photo-preview-item"><img src="${photo.dataUrl}"><div class="remove-photo" onclick="removePhoto(${index})">✕</div></div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function removePhoto(index) { selectedPhotos.splice(index, 1); renderPhotoPreview(); }
+
+    async function addMember() {
+        const memberData = {
+            name: document.getElementById('memberName').value,
+            age: parseInt(document.getElementById('memberAge').value),
+            city: document.getElementById('memberCity').value,
+            country: document.getElementById('memberCountry').value,
+            nationality: document.getElementById('memberNationality').value,
+            gender: document.getElementById('memberGender').value,
+            interested_in: document.getElementById('memberInterestedIn').value,
+            bio: document.getElementById('memberBio').value,
+            looking_for: document.getElementById('memberLookingFor').value,
+            photos: selectedPhotos.map(p => p.dataUrl)
+        };
+        if (!memberData.name || !memberData.age || !memberData.country) { alert("Fill required fields"); return; }
+        if (memberData.photos.length === 0) { alert("Upload at least 1 photo"); return; }
+        await addMember(memberData);
+        alert("Member added!");
+        location.reload();
+    }
+
+    async function loadRegistrations() {
+        const registrations = await getRegistrations();
+        const container = document.getElementById('registrationsTable');
+        if (registrations.length === 0) { container.innerHTML = "<p>No registrations yet.</p>"; return; }
+        let html = `<table><thead><tr><th>Photos</th><th>Name</th><th>Gender</th><th>Age</th><th>Nationality</th><th>Country</th><th>Looking For</th><th>WhatsApp</th><th>Registered</th></tr></thead><tbody>`;
+        registrations.forEach(r => {
+            let photosHtml = r.photos && r.photos.length ? `<div style="display:flex;gap:3px;">${r.photos.slice(0,2).map(p => `<img src="${p}" width="35" height="35" style="border-radius:8px;">`).join('')}</div>` : '📷';
+            html += `<tr><td>${photosHtml}</td><td>${r.full_name}</td><td>${r.gender}</td><td>${r.age}</td><td>${r.nationality}</td><td>${r.current_country}</td><td>${(r.looking_for || '').substring(0, 40)}</td><td>${r.whatsapp}</td><td>${new Date(r.created_at).toLocaleDateString()}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    }
+
+    async function loadMembersTable() {
+        members = await getMembers();
+        const container = document.getElementById('membersTable');
+        if (members.length === 0) { container.innerHTML = "<p>No members.</p>"; return; }
+        let html = `<table><thead><tr><th>Photos</th><th>Name</th><th>Age</th><th>Country</th><th>Gender</th><th>Bio</th><th>Actions</th></tr></thead><tbody>`;
+        members.forEach(m => {
+            let photosHtml = m.photos && m.photos.length ? `<img src="${m.photos[0]}" width="40" height="40" style="border-radius:50%;">` : '📷';
+            html += `<tr><td>${photosHtml}</td><td>${m.name}</td><td>${m.age}</td><td>${m.country}</td><td>${m.gender}</td><td>${(m.bio || '').substring(0, 30)}</td>
+            <td><button class="edit-btn" onclick="editMember(${m.id})">✏️</button><button class="delete-btn" onclick="deleteMember(${m.id})">🗑️</button></td></tr>`;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    }
+
+    async function deleteMember(id) { if(confirm("Delete?")) { await deleteMember(id); loadMembersTable(); } }
+    async function editMember(id) { const member = members.find(m => m.id === id); if(!member) return; const newName = prompt("New name", member.name); if(newName) { member.name = newName; await updateMember(id, member); loadMembersTable(); } }
+
+    async function logout() { await adminLogout(); window.location.href = 'admin-login.html'; }
+
+    function switchTab(tab) {
+        document.getElementById('registrationsTab').classList.toggle('active', tab === 'registrations');
+        document.getElementById('membersTab').classList.toggle('active', tab === 'members');
+        document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', (tab === 'registrations' && i === 0) || (tab === 'members' && i === 1)));
+        if(tab === 'registrations') loadRegistrations(); else loadMembersTable();
+    }
+
+    // Check authentication
+    requireAdmin().then(() => { loadRegistrations(); });
+</script>
+</body>
+</html>
