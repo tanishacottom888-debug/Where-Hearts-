@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Where Hearts Meet | Find Love</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0F1A24;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .hero {
+            position: relative;
+            height: 100vh;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.55);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(15, 26, 36, 0.6) 0%, rgba(15, 26, 36, 0.85) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        .hero-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: float 3s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FFFFFF 0%, #C6A43F 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 16px;
+        }
+
+        .sweet-line {
+            font-size: 18px;
+            color: #F9F6F0;
+            font-style: italic;
+            font-weight: 400;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(198, 164, 63, 0.2);
+            backdrop-filter: blur(8px);
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            color: #C6A43F;
+            font-weight: 600;
+            margin-top: 20px;
+            border: 0.5px solid rgba(198, 164, 63, 0.4);
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 2;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+
+        .scroll-hint span {
+            color: #C6A43F;
+            font-size: 28px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        .form-section {
+            background: #0F1A24;
+            padding: 40px 20px 60px;
+        }
+
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-card {
+            background: #F9F6F0;
+            border-radius: 40px;
+            padding: 32px 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-title {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .form-title h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0F1A24;
+        }
+
+        .form-title p {
+            font-size: 13px;
+            color: #6B5E5E;
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #0F1A24;
+            margin-bottom: 8px;
+        }
+
+        .hint {
+            font-size: 10px;
+            color: #8A7A7A;
+            margin-top: 6px;
+            display: block;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 15px;
+            background: #FFFFFF;
+            border: 1.5px solid #E8E0D5;
+            border-radius: 50px;
+            color: #2C2C2C;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        textarea {
+            border-radius: 24px;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #C6A43F;
+            box-shadow: 0 0 0 3px rgba(198, 164, 63, 0.15);
+        }
+
+        /* Photo upload styling */
+        .photo-upload {
+            border: 2px dashed #C6A43F;
+            background: #FFF8F0;
+            border-radius: 60px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+
+        .photo-preview {
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+        }
+
+        .photo-preview img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #C6A43F;
+        }
+
+        .double-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .double-row .form-group {
+            flex: 1;
+        }
+
+        .continue-btn {
+            width: 100%;
+            background: #6B2D3E;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            font-size: 17px;
+            font-weight: 700;
+            border-radius: 50px;
+            margin-top: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .continue-btn:active {
+            transform: scale(0.97);
+            background: #4F1E2C;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 11px;
+            color: #C6A43F;
+        }
+
+        @media (max-width: 480px) {
+            .hero {
+                height: 90vh;
+                min-height: 550px;
+            }
+            h1 {
+                font-size: 36px;
+            }
+            .sweet-line {
+                font-size: 16px;
+            }
+            .hero-icon {
+                font-size: 52px;
+            }
+            .form-card {
+                padding: 28px 20px;
+            }
+            .form-title h2 {
+                font-size: 24px;
+            }
+            .double-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            input, select, textarea {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+            .continue-btn {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .form-card {
+                padding: 24px 18px;
+            }
+            h1 {
+                font-size: 30px;
+            }
+            .sweet-line {
+                font-size: 14px;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <img class="hero-bg" src="https://images.unsplash.com/photo-1501901609772-df0848060b33?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Romantic sunset couple">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="hero-icon">💕</div>
+        <h1>Where Hearts Meet</h1>
+        <div class="sweet-line">
+            "Every love story begins with a single hello"
+        </div>
+        <div class="hero-badge">ELITE MATCHMAKING</div>
+    </div>
+    <div class="scroll-hint" onclick="document.getElementById('form-section').scrollIntoView({behavior: 'smooth'})">
+        <span>👇</span>
+    </div>
+</div>
+
+<div class="form-section" id="form-section">
+    <div class="form-container">
+        <div class="form-card">
+            <div class="form-title">
+                <h2>Begin Your Journey</h2>
+                <p>Confidential · Curated · Heart-led</p>
+            </div>
+
+            <form id="userForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Full name</label>
+                    <input type="text" id="fullName" placeholder="Your real name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="gender" required>
+                        <option value="">Select</option>
+                        <option value="Female">Female</option>
+                        <option value="Male">Male</option>
+                        <option value="Non-binary">Non-binary</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>I am interested in</label>
+                    <select id="interestedIn" required>
+                        <option value="">Select</option>
+                        <option value="Men">Men</option>
+                        <option value="Women">Women</option>
+                        <option value="Everyone">Everyone</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="age" placeholder="Your age" required>
+                </div>
+
+                <div class="double-row">
+                    <div class="form-group">
+                        <label>Nationality</label>
+                        <input type="text" id="nationality" placeholder="e.g., Ugandan" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Current country</label>
+                        <input type="text" id="currentCountry" placeholder="e.g., Uganda" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>What are you looking for?</label>
+                    <textarea id="lookingFor" placeholder="A genuine connection, shared values, and a heart that matches mine..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Upload your photo</label>
+                    <input type="file" id="userPhoto" accept="image/*" class="photo-upload">
+                    <div class="photo-preview" id="photoPreview">
+                        <img id="previewImg" src="">
+                    </div>
+                    <span class="hint">📸 Upload a clear photo of yourself (max 2MB)</span>
+                </div>
+
+                <div class="form-group">
+                    <label>WhatsApp number</label>
+                    <input type="tel" id="whatsapp" placeholder="+256712345678" required>
+                    <span class="hint">📱 Start with country code: +256 (Uganda), +254 (Kenya), +255 (Tanzania), +250 (Rwanda)</span>
+                </div>
+
+                <button type="submit" class="continue-btn">CONTINUE →</button>
+            </form>
+
+            <div class="footer-note">
+                🔒 Your information is private and secure
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Photo preview
+    document.getElementById('userPhoto').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.getElementById('photoPreview');
+                const img = document.getElementById('previewImg');
+                img.src = event.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('userForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const photoFile = document.getElementById('userPhoto').files[0];
+        
+        // For demo, we'll store photo as base64
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            const userData = {
+                id: Date.now(),
+                fullName: document.getElementById('fullName').value,
+                gender: document.getElementById('gender').value,
+                interestedIn: document.getElementById('interestedIn').value,
+                age: document.getElementById('age').value,
+                nationality: document.getElementById('nationality').value,
+                currentCountry: document.getElementById('currentCountry').value,
+                lookingFor: document.getElementById('lookingFor').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                photo: photoFile ? event.target.result : '',
+                timestamp: new Date().toISOString(),
+                type: 'user_registration'
+            };
+
+            // Save to user registrations
+            let registrations = JSON.parse(localStorage.getItem('whm_registrations') || '[]');
+            registrations.push(userData);
+            localStorage.setItem('whm_registrations', JSON.stringify(registrations));
+
+            alert('💖 Thank you, ' + userData.fullName + '! Your registration has been saved.');
+            document.getElementById('userForm').reset();
+            document.getElementById('photoPreview').style.display = 'none';
+        };
+        
+        if (photoFile) {
+            reader.readAsDataURL(photoFile);
+        } else {
+            // No photo uploaded
+            const userData = {
+                id: Date.now(),
+                fullName: document.getElementById('fullName').value,
+                gender: document.getElementById('gender').value,
+                interestedIn: document.getElementById('interestedIn').value,
+                age: document.getElementById('age').value,
+                nationality: document.getElementById('nationality').value,
+                currentCountry: document.getElementById('currentCountry').value,
+                lookingFor: document.getElementById('lookingFor').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                photo: '',
+                timestamp: new Date().toISOString(),
+                type: 'user_registration'
+            };
+            let registrations = JSON.parse(localStorage.getItem('whm_registrations') || '[]');
+            registrations.push(userData);
+            localStorage.setItem('whm_registrations', JSON.stringify(registrations));
+            alert('💖 Thank you, ' + userData.fullName + '! Your registration has been saved.');
+            document.getElementById('userForm').reset();
+        }
+    });
+</script>
+</body>
+</html>
