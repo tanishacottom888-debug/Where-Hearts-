@@ -197,7 +197,6 @@
             box-shadow: 0 0 0 3px rgba(198, 164, 63, 0.15);
         }
 
-        /* Photo upload styling */
         .photo-upload {
             border: 2px dashed #C6A43F;
             background: #FFF8F0;
@@ -426,58 +425,42 @@
 
         const photoFile = document.getElementById('userPhoto').files[0];
         
-        // For demo, we'll store photo as base64
-        const reader = new FileReader();
-        
-        reader.onload = function(event) {
-            const userData = {
-                id: Date.now(),
-                fullName: document.getElementById('fullName').value,
-                gender: document.getElementById('gender').value,
-                interestedIn: document.getElementById('interestedIn').value,
-                age: document.getElementById('age').value,
-                nationality: document.getElementById('nationality').value,
-                currentCountry: document.getElementById('currentCountry').value,
-                lookingFor: document.getElementById('lookingFor').value,
-                whatsapp: document.getElementById('whatsapp').value,
-                photo: photoFile ? event.target.result : '',
-                timestamp: new Date().toISOString(),
-                type: 'user_registration'
-            };
-
+        const saveAndRedirect = function(userData) {
             // Save to user registrations
             let registrations = JSON.parse(localStorage.getItem('whm_registrations') || '[]');
             registrations.push(userData);
             localStorage.setItem('whm_registrations', JSON.stringify(registrations));
 
             alert('💖 Thank you, ' + userData.fullName + '! Your registration has been saved.');
-            document.getElementById('userForm').reset();
-            document.getElementById('photoPreview').style.display = 'none';
+            
+            // ✅ REDIRECT to members page
+            window.location.href = 'members.html';
         };
         
+        const userData = {
+            id: Date.now(),
+            fullName: document.getElementById('fullName').value,
+            gender: document.getElementById('gender').value,
+            interestedIn: document.getElementById('interestedIn').value,
+            age: document.getElementById('age').value,
+            nationality: document.getElementById('nationality').value,
+            currentCountry: document.getElementById('currentCountry').value,
+            lookingFor: document.getElementById('lookingFor').value,
+            whatsapp: document.getElementById('whatsapp').value,
+            photo: '',
+            timestamp: new Date().toISOString(),
+            type: 'user_registration'
+        };
+
         if (photoFile) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                userData.photo = event.target.result;
+                saveAndRedirect(userData);
+            };
             reader.readAsDataURL(photoFile);
         } else {
-            // No photo uploaded
-            const userData = {
-                id: Date.now(),
-                fullName: document.getElementById('fullName').value,
-                gender: document.getElementById('gender').value,
-                interestedIn: document.getElementById('interestedIn').value,
-                age: document.getElementById('age').value,
-                nationality: document.getElementById('nationality').value,
-                currentCountry: document.getElementById('currentCountry').value,
-                lookingFor: document.getElementById('lookingFor').value,
-                whatsapp: document.getElementById('whatsapp').value,
-                photo: '',
-                timestamp: new Date().toISOString(),
-                type: 'user_registration'
-            };
-            let registrations = JSON.parse(localStorage.getItem('whm_registrations') || '[]');
-            registrations.push(userData);
-            localStorage.setItem('whm_registrations', JSON.stringify(registrations));
-            alert('💖 Thank you, ' + userData.fullName + '! Your registration has been saved.');
-            document.getElementById('userForm').reset();
+            saveAndRedirect(userData);
         }
     });
 </script>
