@@ -18,7 +18,7 @@
         }
 
         .container {
-            max-width: 550px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
@@ -45,30 +45,35 @@
             padding: 8px 16px;
             margin-bottom: 24px;
             display: flex;
-            gap: 12px;
+            justify-content: center;
         }
 
         .filter-bar select {
-            flex: 1;
             background: #0F1A24;
             color: #F9F6F0;
             border: 1px solid #C6A43F;
-            padding: 10px;
+            padding: 10px 20px;
             border-radius: 40px;
+            width: 200px;
         }
 
+        /* 2 cards per row grid */
         .members-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
         }
 
         .member-card {
             background: #F9F6F0;
-            border-radius: 28px;
-            overflow: hidden;
-            padding: 20px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 24px;
+            padding: 20px 16px 16px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .member-card:active {
+            transform: scale(0.98);
         }
 
         .member-photo {
@@ -77,44 +82,165 @@
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid #C6A43F;
-            margin-bottom: 16px;
+            margin: 0 auto 12px;
+            display: block;
         }
 
         .member-name {
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 800;
             color: #0F1A24;
         }
 
-        .member-details {
-            color: #6B5E5E;
+        .member-age {
+            color: #6B2D3E;
+            font-weight: 600;
             font-size: 14px;
-            margin: 8px 0;
+            margin: 2px 0;
         }
 
-        .member-bio {
-            font-style: italic;
-            margin: 12px 0;
-            padding: 10px;
-            background: #FFF0E8;
-            border-radius: 20px;
-            color: #4A3B32;
+        .member-location {
+            font-size: 13px;
+            color: #6B5E5E;
+            margin: 4px 0;
         }
 
-        .whatsapp-btn {
-            background: #25D366;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-            font-size: 16px;
+        .member-nationality {
+            font-size: 13px;
+            color: #C6A43F;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .see-more-btn {
+            background: transparent;
+            border: 1.5px solid #6B2D3E;
+            color: #6B2D3E;
+            padding: 8px 12px;
+            border-radius: 40px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+
+        .see-more-btn:active {
+            background: #6B2D3E;
+            color: white;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #F9F6F0;
+            border-radius: 40px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            padding: 24px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #6B5E5E;
+            font-weight: bold;
+        }
+
+        .modal-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #C6A43F;
+            margin: 0 auto 16px;
+            display: block;
+        }
+
+        .modal-name {
+            font-size: 26px;
+            font-weight: 800;
+            color: #0F1A24;
+            text-align: center;
+        }
+
+        .modal-age {
+            text-align: center;
+            color: #6B2D3E;
+            font-weight: 600;
+            margin: 4px 0;
+        }
+
+        .modal-location {
+            text-align: center;
+            color: #6B5E5E;
+        }
+
+        .modal-nationality {
+            text-align: center;
+            color: #C6A43F;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            color: #0F1A24;
+            margin: 16px 0 8px;
+            border-left: 3px solid #C6A43F;
+            padding-left: 12px;
+        }
+
+        .modal-bio {
+            background: #FFF0E8;
+            padding: 12px;
+            border-radius: 20px;
+            line-height: 1.5;
+            color: #4A3B32;
+        }
+
+        .whatsapp-assist-btn {
+            width: 100%;
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 60px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 24px;
+            cursor: pointer;
+        }
+
+        .admin-note {
+            text-align: center;
+            font-size: 11px;
+            color: #8A7A7A;
             margin-top: 12px;
         }
 
         .no-members {
+            grid-column: span 2;
             text-align: center;
             color: #F9F6F0;
             padding: 40px;
@@ -122,13 +248,17 @@
             border-radius: 28px;
         }
 
-        @media (max-width: 480px) {
-            .member-photo {
-                width: 80px;
-                height: 80px;
+        @media (max-width: 550px) {
+            .members-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
             }
-            .member-name {
-                font-size: 18px;
+            .no-members {
+                grid-column: span 1;
+            }
+            .member-photo {
+                width: 85px;
+                height: 85px;
             }
         }
     </style>
@@ -137,12 +267,12 @@
 <div class="container">
     <div class="header">
         <h1>💕 Meet Your Match</h1>
-        <p>Browse singles looking for love</p>
+        <p>Tap "See more" to view full profile</p>
     </div>
 
     <div class="filter-bar">
         <select id="genderFilter">
-            <option value="all">All</option>
+            <option value="all">All Members</option>
             <option value="Female">Women</option>
             <option value="Male">Men</option>
         </select>
@@ -153,36 +283,54 @@
     </div>
 </div>
 
+<!-- Modal for member details -->
+<div id="memberModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <img id="modalPhoto" class="modal-photo" src="" alt="Member photo">
+        <div id="modalName" class="modal-name"></div>
+        <div id="modalAge" class="modal-age"></div>
+        <div id="modalLocation" class="modal-location"></div>
+        <div id="modalNationality" class="modal-nationality"></div>
+        
+        <div class="section-title">📖 About</div>
+        <div id="modalBio" class="modal-bio"></div>
+        
+        <div class="section-title">💫 Looking for</div>
+        <div id="modalLookingFor" class="modal-bio"></div>
+        
+        <button id="whatsappAssistBtn" class="whatsapp-assist-btn">💬 Connect via WhatsApp (Admin Assisted)</button>
+        <div class="admin-note">🔒 You'll be connected to our agency admin who will facilitate the introduction.</div>
+    </div>
+</div>
+
 <script>
+    // IMPORTANT: Replace this with YOUR admin WhatsApp number (with country code)
+    const ADMIN_WHATSAPP = "+256712345678"; // <-- CHANGE THIS TO YOUR NUMBER
+    
     let members = [];
+    let currentMember = null;
 
     function loadMembers() {
         const stored = localStorage.getItem('whm_members');
         if (stored) {
             members = JSON.parse(stored);
         } else {
+            // Default demo member to show format - you can remove this
             members = [
                 {
                     id: 1,
                     name: "James Mwangi",
                     age: 34,
+                    city: "Nairobi",
                     country: "Kenya",
+                    nationality: "Kenyan",
                     gender: "Male",
                     interestedIn: "Women",
-                    bio: "Architect who loves hiking and deep conversations",
+                    bio: "Architect who loves hiking, deep conversations, and weekend getaways. I believe in kindness and honesty above all.",
+                    lookingFor: "A woman with a kind heart who values family and loves adventure as much as quiet evenings.",
                     photo: "https://randomuser.me/api/portraits/men/32.jpg",
                     whatsapp: "+254712345678"
-                },
-                {
-                    id: 2,
-                    name: "Aisha Wanjiku",
-                    age: 29,
-                    country: "Uganda",
-                    gender: "Female",
-                    interestedIn: "Men",
-                    bio: "Doctor, loves traveling and good food",
-                    photo: "https://randomuser.me/api/portraits/women/68.jpg",
-                    whatsapp: "+256712345678"
                 }
             ];
             saveMembers();
@@ -203,7 +351,7 @@
 
         const container = document.getElementById('membersContainer');
         if (filtered.length === 0) {
-            container.innerHTML = '<div class="no-members">💔 No members found. Check back soon!</div>';
+            container.innerHTML = '<div class="no-members">💔 No members yet. Check back soon — we\'re adding new hearts daily!</div>';
             return;
         }
 
@@ -213,24 +361,56 @@
                 <div class="member-card">
                     <img class="member-photo" src="${member.photo}" onerror="this.src='https://via.placeholder.com/100'">
                     <div class="member-name">${member.name}, ${member.age}</div>
-                    <div class="member-details">📍 ${member.country} · ${member.gender}</div>
-                    <div class="member-bio">“${member.bio}”</div>
-                    <button class="whatsapp-btn" onclick="connectWhatsApp('${member.whatsapp}', '${member.name.replace(/'/g, "\\'")}')">
-                        💬 Connect on WhatsApp
-                    </button>
+                    <div class="member-location">📍 ${member.city}, ${member.country}</div>
+                    <div class="member-nationality">${member.nationality}</div>
+                    <button class="see-more-btn" onclick="showMemberDetails(${member.id})">See more...</button>
                 </div>
             `;
         });
         container.innerHTML = html;
     }
 
-    function connectWhatsApp(number, name) {
-        const msg = `Hello! I saw your profile on Where Hearts Meet Agency. I would love to connect.`;
-        const url = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank');
+    function showMemberDetails(id) {
+        currentMember = members.find(m => m.id === id);
+        if (!currentMember) return;
+        
+        document.getElementById('modalPhoto').src = currentMember.photo;
+        document.getElementById('modalName').innerHTML = `${currentMember.name}, ${currentMember.age}`;
+        document.getElementById('modalAge').innerHTML = `${currentMember.gender}`;
+        document.getElementById('modalLocation').innerHTML = `📍 ${currentMember.city}, ${currentMember.country}`;
+        document.getElementById('modalNationality').innerHTML = `🇰🇪 ${currentMember.nationality}`;
+        document.getElementById('modalBio').innerHTML = currentMember.bio || "This member hasn't added a bio yet.";
+        document.getElementById('modalLookingFor').innerHTML = currentMember.lookingFor || "Looking for a genuine connection.";
+        
+        document.getElementById('memberModal').style.display = 'flex';
     }
 
+    function closeModal() {
+        document.getElementById('memberModal').style.display = 'none';
+        currentMember = null;
+    }
+
+    // Admin-assisted WhatsApp connection
+    document.getElementById('whatsappAssistBtn').addEventListener('click', function() {
+        if (!currentMember) return;
+        
+        const seeker = JSON.parse(localStorage.getItem('heartSeeker') || '{}');
+        const seekerName = seeker.fullName || "a member";
+        
+        const message = `Hello! I'm ${seekerName} from Where Hearts Meet Agency. I would love to be introduced to ${currentMember.name}. Please assist me with the connection. Thank you!`;
+        const url = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+    });
+
     document.getElementById('genderFilter').addEventListener('change', renderMembers);
+    
+    window.onclick = function(event) {
+        const modal = document.getElementById('memberModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+    
     loadMembers();
 </script>
 </body>
