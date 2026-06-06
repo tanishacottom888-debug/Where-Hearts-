@@ -57,7 +57,6 @@
             width: 200px;
         }
 
-        /* 2 cards per row grid */
         .members-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -69,6 +68,7 @@
             border-radius: 24px;
             padding: 20px 16px 16px;
             text-align: center;
+            cursor: pointer;
             transition: transform 0.2s;
         }
 
@@ -131,7 +131,6 @@
             color: white;
         }
 
-        /* Modal styles */
         .modal {
             display: none;
             position: fixed;
@@ -175,6 +174,22 @@
             border: 4px solid #C6A43F;
             margin: 0 auto 16px;
             display: block;
+        }
+
+        .modal-photos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 16px 0;
+        }
+
+        .modal-photos img {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid #C6A43F;
         }
 
         .modal-name {
@@ -251,7 +266,6 @@
         @media (max-width: 550px) {
             .members-grid {
                 grid-template-columns: 1fr;
-                gap: 16px;
             }
             .no-members {
                 grid-column: span 1;
@@ -283,11 +297,11 @@
     </div>
 </div>
 
-<!-- Modal for member details -->
 <div id="memberModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeModal()">&times;</span>
         <img id="modalPhoto" class="modal-photo" src="" alt="Member photo">
+        <div id="modalPhotos" class="modal-photos"></div>
         <div id="modalName" class="modal-name"></div>
         <div id="modalAge" class="modal-age"></div>
         <div id="modalLocation" class="modal-location"></div>
@@ -305,41 +319,25 @@
 </div>
 
 <script>
-    // IMPORTANT: Replace this with YOUR admin WhatsApp number (with country code)
-    const ADMIN_WHATSAPP = "+256712345678"; // <-- CHANGE THIS TO YOUR NUMBER
+    // IMPORTANT: Replace with YOUR admin WhatsApp number
+    const ADMIN_WHATSAPP = "+256712345678";
     
     let members = [];
     let currentMember = null;
 
     function loadMembers() {
         const stored = localStorage.getItem('whm_members');
-        if (stored) {
+        console.log("Loaded from localStorage:", stored);
+        
+        if (stored && stored !== "[]") {
             members = JSON.parse(stored);
         } else {
-            // Default demo member to show format - you can remove this
-            members = [
-                {
-                    id: 1,
-                    name: "James Mwangi",
-                    age: 34,
-                    city: "Nairobi",
-                    country: "Kenya",
-                    nationality: "Kenyan",
-                    gender: "Male",
-                    interestedIn: "Women",
-                    bio: "Architect who loves hiking, deep conversations, and weekend getaways. I believe in kindness and honesty above all.",
-                    lookingFor: "A woman with a kind heart who values family and loves adventure as much as quiet evenings.",
-                    photo: "https://randomuser.me/api/portraits/men/32.jpg",
-                    whatsapp: "+254712345678"
-                }
-            ];
-            saveMembers();
+            // Demo data if empty
+            members = [];
         }
+        
+        console.log("Members array:", members);
         renderMembers();
-    }
-
-    function saveMembers() {
-        localStorage.setItem('whm_members', JSON.stringify(members));
     }
 
     function renderMembers() {
@@ -351,19 +349,20 @@
 
         const container = document.getElementById('membersContainer');
         if (filtered.length === 0) {
-            container.innerHTML = '<div class="no-members">💔 No members yet. Check back soon — we\'re adding new hearts daily!</div>';
+            container.innerHTML = '<div class="no-members">💔 No members yet. Admin needs to add members in the admin panel.</div>';
             return;
         }
 
         let html = '';
         filtered.forEach(member => {
+            const mainPhoto = member.photos && member.photos.length > 0 ? member.photos[0] : 'https://via.placeholder.com/100';
             html += `
-                <div class="member-card">
-                    <img class="member-photo" src="${member.photo}" onerror="this.src='https://via.placeholder.com/100'">
+                <div class="member-card" onclick="showMemberDetails(${member.id})">
+                    <img class="member-photo" src="${mainPhoto}" onerror="this.src='https://via.placeholder.com/100'">
                     <div class="member-name">${member.name}, ${member.age}</div>
-                    <div class="member-location">📍 ${member.city}, ${member.country}</div>
-                    <div class="member-nationality">${member.nationality}</div>
-                    <button class="see-more-btn" onclick="showMemberDetails(${member.id})">See more...</button>
+                    <div class="member-location">📍 ${member.city || member.country}, ${member.country}</div>
+                    <div class="member-nationality">${member.nationality || member.country}</div>
+                    <button class="see-more-btn">See more...</button>
                 </div>
             `;
         });
@@ -374,11 +373,22 @@
         currentMember = members.find(m => m.id === id);
         if (!currentMember) return;
         
-        document.getElementById('modalPhoto').src = currentMember.photo;
+        const mainPhoto = currentMember.photos && currentMember.photos.length > 0 ? currentMember.photos[0] : 'https://via.placeholder.com/120';
+        document.getElementById('modalPhoto').src = mainPhoto;
+        
+        // Show all photos
+        let photosHtml = '';
+        if (currentMember.photos && currentMember.photos.length > 0) {
+            currentMember.photos.forEach(photo => {
+                photosHtml += `<img src="${photo}" onerror="this.src='https://via.placeholder.com/80'">`;
+            });
+        }
+        document.getElementById('modalPhotos').innerHTML = photosHtml;
+        
         document.getElementById('modalName').innerHTML = `${currentMember.name}, ${currentMember.age}`;
         document.getElementById('modalAge').innerHTML = `${currentMember.gender}`;
-        document.getElementById('modalLocation').innerHTML = `📍 ${currentMember.city}, ${currentMember.country}`;
-        document.getElementById('modalNationality').innerHTML = `🇰🇪 ${currentMember.nationality}`;
+        document.getElementById('modalLocation').innerHTML = `📍 ${currentMember.city || currentMember.country}, ${currentMember.country}`;
+        document.getElementById('modalNationality').innerHTML = `🌍 ${currentMember.nationality || currentMember.country}`;
         document.getElementById('modalBio').innerHTML = currentMember.bio || "This member hasn't added a bio yet.";
         document.getElementById('modalLookingFor').innerHTML = currentMember.lookingFor || "Looking for a genuine connection.";
         
@@ -390,14 +400,13 @@
         currentMember = null;
     }
 
-    // Admin-assisted WhatsApp connection
     document.getElementById('whatsappAssistBtn').addEventListener('click', function() {
         if (!currentMember) return;
         
         const seeker = JSON.parse(localStorage.getItem('heartSeeker') || '{}');
         const seekerName = seeker.fullName || "a member";
         
-        const message = `Hello! I'm ${seekerName} from Where Hearts Meet Agency. I would love to be introduced to ${currentMember.name}. Please assist me with the connection. Thank you!`;
+        const message = `Hello! I'm ${seekerName} from Where Hearts Meet Agency. I would love to be introduced to ${currentMember.name}. Please assist me.`;
         const url = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     });
@@ -412,6 +421,9 @@
     }
     
     loadMembers();
+    
+    // Refresh when coming back to page
+    window.addEventListener('focus', loadMembers);
 </script>
 </body>
 </html>
