@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Where Hearts Meet | Find Love</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -197,7 +198,6 @@
             box-shadow: 0 0 0 3px rgba(198, 164, 63, 0.15);
         }
 
-        /* Photo upload styling */
         .photo-upload-area {
             border: 2px dashed #C6A43F;
             background: #FFF8F0;
@@ -465,6 +465,12 @@
 </div>
 
 <script>
+    // ============ SUPABASE CONFIGURATION ============
+    const SUPABASE_URL = "https://cggskooljrjacgjnxotc.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Ge37Z1zdP79Vb19GobMCCg_9PVkXSlT";
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
     let selectedPhotos = [];
 
     // Handle photo selection (max 3)
@@ -520,7 +526,7 @@
         renderPhotoPreview();
     }
 
-    document.getElementById('userForm').addEventListener('submit', function(e) {
+    document.getElementById('userForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const fullName = document.getElementById('fullName').value;
@@ -550,30 +556,37 @@
         };
         localStorage.setItem('heartSeeker', JSON.stringify(userData));
 
-        // Save registration with photos
+        // Prepare registration data for Supabase
         const registrationData = {
-            id: Date.now(),
-            fullName: fullName,
+            full_name: fullName,
             gender: gender,
-            interestedIn: interestedIn,
-            age: age,
+            interested_in: interestedIn,
+            age: parseInt(age),
             nationality: nationality,
-            currentCountry: currentCountry,
-            lookingFor: lookingFor,
+            current_country: currentCountry,
+            looking_for: lookingFor,
             whatsapp: whatsapp,
             photos: selectedPhotos.map(p => p.dataUrl),
-            timestamp: new Date().toISOString(),
-            type: 'user_registration'
+            created_at: new Date().toISOString()
         };
 
-        let registrations = JSON.parse(localStorage.getItem('whm_registrations') || '[]');
-        registrations.push(registrationData);
-        localStorage.setItem('whm_registrations', JSON.stringify(registrations));
-
-        alert('💖 Thank you, ' + fullName + '! Your registration has been saved.');
-        
-        // ✅ REDIRECT to members page
-        window.location.href = 'members.html';
+        try {
+            // Save to Supabase (cloud database)
+            const { error } = await supabaseClient
+                .from('registrations')
+                .insert([registrationData]);
+            
+            if (error) throw error;
+            
+            alert('💖 Thank you, ' + fullName + '! Your registration has been saved to our secure database.');
+            
+            // Redirect to members page
+            window.location.href = 'members.html';
+            
+        } catch (error) {
+            console.error("Error saving registration:", error);
+            alert('❌ Error saving your registration. Please try again.\n\nError: ' + error.message);
+        }
     });
 </script>
 </body>
