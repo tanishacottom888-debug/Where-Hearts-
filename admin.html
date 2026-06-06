@@ -39,6 +39,7 @@
         .edit-btn { background: #C6A43F; color: #0F1A24; }
         .delete-btn { background: #6B2D3E; color: white; }
         .success-msg { background: #4CAF50; color: white; padding: 10px; border-radius: 10px; margin-top: 10px; display: none; }
+        .loading { text-align: center; padding: 40px; color: #F9F6F0; }
         @media (max-width: 700px) { th, td { font-size: 12px; padding: 8px; } }
     </style>
 </head>
@@ -55,7 +56,7 @@
     </div>
 
     <div id="registrationsTab" class="tab-content active">
-        <div class="admin-card"><h2>📝 User Registrations</h2><div id="registrationsTable"></div></div>
+        <div class="admin-card"><h2>📝 User Registrations</h2><div id="registrationsTable"><div class="loading">Loading...</div></div></div>
     </div>
 
     <div id="membersTab" class="tab-content">
@@ -89,21 +90,22 @@
             <button class="add-btn" onclick="addMember()">➕ Add Member to Gallery</button>
             <div id="successMsg" class="success-msg">✅ Member added successfully! It will now appear on members page.</div>
         </div>
-        <div class="admin-card"><h2>📋 All Members</h2><div id="membersTable"></div></div>
+        <div class="admin-card"><h2>📋 All Members</h2><div id="membersTable"><div class="loading">Loading...</div></div></div>
     </div>
 </div>
 
 <script>
-    // Supabase configuration - YOUR CREDENTIALS
+    // Supabase configuration
     const SUPABASE_URL = "https://cggskooljrjacgjnxotc.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Ge37Z1zdP79Vb19GobMCCg_9PVkXSlT";
     
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize Supabase client (fixed variable name conflict)
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     let selectedPhotos = [];
-    let members = [];
+    let membersList = [];
 
-    // Handle photo selection (max 6)
+    // ============ PHOTO UPLOAD FUNCTIONS ============
     document.getElementById('photoInput').addEventListener('change', function(e) {
         const files = Array.from(e.target.files);
         const remainingSlots = 6 - selectedPhotos.length;
@@ -149,7 +151,7 @@
         renderPhotoPreview();
     }
 
-    // ADD MEMBER - Fixed to work properly
+    // ============ ADD MEMBER ============
     async function addMember() {
         const name = document.getElementById('memberName').value;
         const age = document.getElementById('memberAge').value;
@@ -161,7 +163,6 @@
         const bio = document.getElementById('memberBio').value;
         const lookingFor = document.getElementById('memberLookingFor').value;
         
-        // Validation
         if (!name || !age || !country) {
             alert("Please fill required fields: Name, Age, Country");
             return;
@@ -187,15 +188,13 @@
         };
         
         try {
-            // Save to Supabase
-            const { data, error } = await supabase
+            const { data, error } = await _supabase
                 .from('members')
                 .insert([memberData])
                 .select();
             
             if (error) throw error;
             
-            // Show success message
             const successMsg = document.getElementById('successMsg');
             successMsg.style.display = 'block';
             setTimeout(() => { successMsg.style.display = 'none'; }, 3000);
@@ -211,26 +210,26 @@
             selectedPhotos = [];
             renderPhotoPreview();
             
-            // Refresh members table
             await loadMembersTable();
             
-            alert(`✅ Member "${name}" added successfully! It will now appear on the members page.`);
+            alert(`✅ Member "${name}" added successfully!`);
             
         } catch (error) {
-            console.error("Error adding member:", error);
-            alert("Error adding member: " + error.message);
+            console.error("Error:", error);
+            alert("Error: " + error.message);
         }
     }
 
-    // Load registrations from Supabase
+    // ============ LOAD REGISTRATIONS ============
     async function loadRegistrations() {
-        const { data, error } = await supabase
+        const { data, error } = await _supabase
             .from('registrations')
             .select('*')
             .order('created_at', { ascending: false });
         
         if (error) {
             console.error("Error loading registrations:", error);
+            document.getElementById('registrationsTable').innerHTML = "<p style='padding:20px;text-align:center;color:red;'>Error loading data</p>";
             return;
         }
         
@@ -270,19 +269,20 @@
         container.innerHTML = html;
     }
 
-    // Load members table (for admin view)
+    // ============ LOAD MEMBERS TABLE ============
     async function loadMembersTable() {
-        const { data, error } = await supabase
+        const { data, error } = await _supabase
             .from('members')
             .select('*')
             .order('created_at', { ascending: false });
         
         if (error) {
             console.error("Error loading members:", error);
+            document.getElementById('membersTable').innerHTML = "<p style='padding:20px;text-align:center;color:red;'>Error loading data</p>";
             return;
         }
         
-        members = data || [];
+        membersList = data || [];
         const container = document.getElementById('membersTable');
         
         if (!data || data.length === 0) {
@@ -321,11 +321,11 @@
         container.innerHTML = html;
     }
 
-    // Delete member
+    // ============ DELETE MEMBER ============
     async function deleteMember(id) {
         if (!confirm("⚠️ Delete this member permanently?")) return;
         
-        const { error } = await supabase
+        const { error } = await _supabase
             .from('members')
             .delete()
             .eq('id', id);
@@ -338,14 +338,14 @@
         }
     }
 
-    // Edit member
+    // ============ EDIT MEMBER ============
     async function editMember(id) {
-        const member = members.find(m => m.id === id);
+        const member = membersList.find(m => m.id === id);
         if (!member) return;
         
         const newName = prompt("Edit full name", member.name);
         if (newName && newName !== member.name) {
-            const { error } = await supabase
+            const { error } = await _supabase
                 .from('members')
                 .update({ name: newName })
                 .eq('id', id);
@@ -354,23 +354,23 @@
         }
     }
 
-    // Logout
+    // ============ LOGOUT ============
     async function logout() {
-        await supabase.auth.signOut();
+        await _supabase.auth.signOut();
         window.location.href = 'admin-login.html';
     }
 
-    // Check if admin is logged in
+    // ============ CHECK AUTHENTICATION ============
     async function checkAuth() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
             window.location.href = 'admin-login.html';
             return false;
         }
         return true;
     }
 
-    // Switch tabs
+    // ============ SWITCH TABS ============
     function switchTab(tab) {
         const registrationsTab = document.getElementById('registrationsTab');
         const membersTab = document.getElementById('membersTab');
@@ -391,11 +391,11 @@
         }
     }
 
-    // Initialize
+    // ============ INITIALIZE ============
     async function init() {
         const isAuthed = await checkAuth();
         if (isAuthed) {
-            loadRegistrations();
+            await loadRegistrations();
         }
     }
     
